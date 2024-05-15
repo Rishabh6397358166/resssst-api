@@ -1,0 +1,40 @@
+Please find the below credential…
+
+URL: http://vscrmss.com.in/
+User:admin
+Pass:Vsdwpl#123
+
+ftp/cpanel
+http://vscrmss.com.in/cpanel
+User name: vscrmsscom
+port:21
+Passkey: iJ[e1.iTbz32
+
+
+
+API Token:	Basic MDE1NzI6ZTkxZWFmN2YtYTkwNC00NDlkLWEzMmItOTA4ZWYyMjJmYTgx
+Response key:	wdckp47tdqdz7rtvnfk642uk7opdk4
+x-api-key:	MY2uUdJrdyLLcpvKmdjaj0MYFFnRvhgMmYDAbFY6
+=====================================================================================================================================================
+Ecnryption key:	h48Ivw+fmWyDU1qL299rXlRVb5XULVvdi35IUGgLGn8=
+IV key--------:	dOjsjPo+lGRQ7aUVcgYj1g==
+=====================================================================================================================================================
+
+Staging Dashboard URL:  https://staging.getshopse.com
+Staging Dashboard Access given to:  infosculptnshine@gmail.com	
+
+Axis Bank Test Debit Card (to test failure scenario):   
+CardNo: 4505020003299054
+Expiry: 12/23
+CVV:    123
+
+To test with success use HDFC Debit Card with below details:
+CardNo: 1111
+OTP:    123456
+
+Axis Bank Test Credit Card:
+CardNo: 4718643445675889
+Expiry: 12/23
+CVV:    123
+OTP:    111111
+=====================================================================================================================================================

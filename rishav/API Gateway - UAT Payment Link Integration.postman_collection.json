@@ -1,0 +1,239 @@
+{
+	"info": {
+		"_postman_id": "12158b3e-3a02-4f46-aa80-ed64303bd44e",
+		"name": "API Gateway - UAT Payment Link Integration",
+		"description": "## Introduction\n\nWelcome to the API documentation for ShopSe API Gateway. This document provides details about how to interact with the ShopSe Gateway API. The API allows you to serve as an intermediary between clients and backend services by managing API requests and responses, it ensures that only authorized clients can access specific APIs by handling authentication and authorization mechanisms.\n\n## Base URL\n\nThe base URL for all API endpoints is as below\n\nUAT : [https://api-out.shop-se.in](https://api-out.shop-se.in/)\n\nProduction: [https://mapi.getshopse.com/](https://mapi.getshopse.com/)\n\n## Authentication\n\n1. API Key needs to be passed in the header (Authorization)\n2. API Key needs to be passed in the header (x-api-key)\n3. API Key needs to be passed in the http request header.\n    \n\n## Encryption of Payload\n\n1. For doing payload encryption, ShopSe shares the encryption key and IV key which is required for generating the encryptedRequest to be sent in the request body.\n2. You will have to do Base64(AES/GCM/NoPadding(request, encryptionKey, ivKey))\n3. Decryption of response will be done using the same method\n    \n\n## Sample Encryption Code\n\n#### **Java:**\n\n```\npackage com.freewayemi.payment.test;\nimport org.apache.commons.codec.DecoderException;\nimport javax.crypto.*;\nimport javax.crypto.spec.IvParameterSpec;\nimport java.security.InvalidAlgorithmParameterException;\nimport java.security.InvalidKeyException;\nimport java.security.NoSuchAlgorithmException;\nimport java.security.SecureRandom;\nimport java.util.Base64;\nimport java.util.Random;\npublic class ShopSeEncryptionTest {\nprivate static final String AES_ALGORITHM = \"AES\";\nprivate static final String AES_GCM_NO_PADDING = \"AES/GCM/NoPadding\";\npublic static final int GCM_TAG_LENGTH = 16;\npublic static void main(String[] args)\n        throws NoSuchPaddingException, InvalidKeyException, DecoderException, IllegalBlockSizeException,\n        BadPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {\n    String secretKey = \"UKcwif+7l5V+Qj9CusFp3HWah+3EQF8/LAOexTq8Mnc=\";  //Only for testing purpose\n    String ivKey = \"F1W2PP/QrrOMEtJejalTzA==\";  //Only for testing purpose\n    String secretKeyType = \"\";\n    String request = \"ShopSe Instant EMI\";\n    String encryptedRequest = encrypt(request.replaceAll(\"\", \"\").replaceAll(\"\\r\", \"\"),\n            secretKey, ivKey, secretKeyType);\n    System.out.println(\"Encrypted request: \" + encryptedRequest);\n    System.out.println(\"Decrypted request or response: \" + decrypt(encryptedRequest, secretKey,\n            ivKey, secretKeyType));\n}\npublic static String encrypt(String request, String symmetricKey, String ivKey, String secretKeyType)\n        throws DecoderException, NoSuchPaddingException, NoSuchAlgorithmException,\n        InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {\n    SecretKeySpec secretKeySpec;\n    if (!StringUtils.isEmpty(secretKeyType)) {\n        if (\"String\".equalsIgnoreCase(secretKeyType)) {\n            secretKeySpec = new SecretKeySpec(symmetricKey.getBytes(), AES_ALGORITHM);\n        } else if (\"Hex\".equalsIgnoreCase(secretKeyType)) {\n            secretKeySpec = new SecretKeySpec(Hex.decode(symmetricKey), AES_ALGORITHM);\n        } else {\n            secretKeySpec = new SecretKeySpec(Base64.getDecoder().decode(symmetricKey.getBytes()), AES_ALGORITHM);\n        }\n    } else {\n        secretKeySpec = new SecretKeySpec(Base64.getDecoder().decode(symmetricKey.getBytes()), AES_ALGORITHM);\n    }\n    Cipher cipher = Cipher.getInstance(AES_GCM_NO_PADDING);\n    GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, ivKey.getBytes());\n    cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, gcmParameterSpec);\n    return Base64.getEncoder().encodeToString(cipher.doFinal(request.getBytes()));\n}\npublic static String decrypt(String encryptedRequest, String symmetricKey, String ivKey, String secretKeyType)\n        throws DecoderException, NoSuchPaddingException, NoSuchAlgorithmException,\n        InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {\n    SecretKeySpec secretKeySpec;\n    if (!StringUtils.isEmpty(secretKeyType)) {\n        if (\"String\".equalsIgnoreCase(secretKeyType)) {\n            secretKeySpec = new SecretKeySpec(symmetricKey.getBytes(), AES_ALGORITHM);\n        } else if (\"Hex\".equalsIgnoreCase(secretKeyType)) {\n            secretKeySpec = new SecretKeySpec(Hex.decode(symmetricKey), AES_ALGORITHM);\n        } else {\n            secretKeySpec = new SecretKeySpec(Base64.getDecoder().decode(symmetricKey.getBytes()), AES_ALGORITHM);\n        }\n    } else {\n        secretKeySpec = new SecretKeySpec(Base64.getDecoder().decode(symmetricKey.getBytes()), AES_ALGORITHM);\n    }\n    Cipher cipher = Cipher.getInstance(AES_GCM_NO_PADDING);\n    GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, ivKey.getBytes());\n    cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec);\n    byte[] result = cipher.doFinal(Base64.getDecoder()\n            .decode(encryptedRequest));\n    return new String(result);\n}\n}\n\n ```\n\n#### PHP:\n\n```\n<html>\n    <head>\n    </head>\n    <body>\n                    $text = '{\"orderId\":\"order1\",\"amount\":\"100\",\"mobile\":\"9790614535\",\"email\":\"yoga@teachedison.com\",\"returnUrl\":\"https://reqbin.com/curl\",\"webhookUrl\":\"https://reqbin.com/curl\",\"firstName\":\"Yoganandan\",\"lastName\":\"Pandiyan\",\"address\":{\"line1\":\"N131\",\"line2\":\"SBIOA Unity Enclave\",\"city\":\"Chengalpattu\",\"state\":\"Tamilnadu\",\"country\":\"India\",\"pincode\":\"600127\"},\"customParams\":{\"salesPersonEmail\":\"sbi@sbi.com\",\"salesPersonMobile\":\"9123123123\"},\"products\":[{\"productId\":\"P1\",\"name\":\"Test one\",\"invoiceNumber\":\"InV1\",\"catalogProductId\":\"catalogProductId\",\"code\":\"T1\",\"amount\":\"4500\",\"quantity\":\"1\",\"skuCode\":\"SKUCode001\",\"serialNo\":\"001\",\"manufacturer\":\"manufacturer\",\"category\":\"category\",\"subCategory\":\"subCategory\",\"model\":\"m1\",\"imeiNo\":\"\",\"additionalInfo\":{\"MyKey1\":\"MyValue1\"}}]}';\n            print 'Plain text is: ' . $text;\n            $algo = \"aes-256-gcm\";\n            $encryption_key = base64_decode(\"lQAMaF0rT+27HMSmi+X6fZ2sbGyFsIgOjxQF8+zygcU=\");\n            $iv_key = \"djVQGIlvi6qMlINiC5zPTw==\";\n            $encrypted = openssl_encrypt($text, $algo, $encryption_key, OPENSSL_ZERO_PADDING | OPENSSL_RAW_DATA, $iv_key, $tag);\n            $result = base64_encode($encrypted . $tag);\n            // Decryption\n            $encrypt = base64_decode($result);\n            $resp_tag = substr($encrypt, -16);\n            $ciphertext = substr($encrypt, 0, -16);\n            $decrypted = openssl_decrypt($ciphertext, $algo, $encryption_key, OPENSSL_ZERO_PADDING | OPENSSL_RAW_DATA, $iv_key, $resp_tag);\n            echo \"<br/><br/>\";\n            print 'Decrypted String: ' . $decrypted;\n        ?>\n    </body>\n</html>\n\n ```\n\n#### Python:\n\n```\nimport base64\nfrom Crypto.Cipher import AES\ndef encrypt(shopse_secret_key, shopse_iv_key, data):\n    decoded_shopse_secret_key = base64.b64decode(shopse_secret_key.encode('utf-8'))\n    shopse_iv_key_bytes = bytes(shopse_iv_key, 'utf-8')\n    aes_cipher = AES.new(decoded_shopse_secret_key, AES.MODE_GCM, nonce=shopse_iv_key_bytes)\n    cipher_text, auth_tag = aes_cipher.encrypt_and_digest(bytes(data, 'utf-8'))\n    new_cipher_text = cipher_text + auth_tag\n    encoded_cipher_text = base64.b64encode(new_cipher_text).decode()\n    print('Plain request is: {} and encrypted request is: {}'.format(data, encoded_cipher_text))\n    return encoded_cipher_text\ndef decrypt(shopse_secret_key, shopse_iv_key, encrypted_data):\n    decoded_data = base64.b64decode(encrypted_data)\n    cipher_text = decoded_data[0:-16]\n    auth_tag = decoded_data[-16:]\n    nonce = bytes(shopse_iv_key, 'utf-8')\n    decoded_shopse_secret_key = base64.b64decode(shopse_secret_key.encode('utf-8'))\n    aes_cipher = AES.new(decoded_shopse_secret_key, AES.MODE_GCM, nonce)\n    plaintext = aes_cipher.decrypt_and_verify(cipher_text, auth_tag)\n    print('Encrypted request is: {} and plan request is: {}'.format(encrypted_data, plaintext.decode()))\nif __name__ == \"__main__\":\n    secret_key = 'lQAMaF0rT+27HMSmi+X6fZ2sbGyFsIgOjxQF8+zygcU='\n    iv_key = 'djVQGIlvi6qMlINiC5zPTw=='\n    request = 'My name is gaurang'\n    encrypted_request = encrypt(shopse_secret_key=secret_key, shopse_iv_key=iv_key, data=request)\n    decrypt(shopse_secret_key=secret_key, shopse_iv_key=iv_key, encrypted_data=encrypted_request)\n\n ```\n\n#### .NET:\n\n```\nusing Org.BouncyCastle.Crypto.Engines;\nusing Org.BouncyCastle.Crypto.Modes;\nusing Org.BouncyCastle.Crypto.Parameters;\nusing System;\nusing System.Text;\nnamespace ConsoleApp1\n{\n    internal class Program\n    {\n        static void Main(string[] args)\n        {\n            string plainText = \"ShopSe encryption and decryption code\";\n            byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);\n            string key = \"UKcwif+7l5V+Qj9CusFp3HWah+3EQF8/LAOexTq8Mnc=\";\n            byte[] key_bytes = Convert.FromBase64String(key);\n            string ivKey = \"F1W2PP/QrrOMEtJejalTzA==\";\n            var ivKeyBytes = Encoding.UTF8.GetBytes(ivKey);\n            string encryptedReq = EncryptWithNet(plainTextBytes, key_bytes, ivKeyBytes);\n            // encryptedReq = \"ly2HvzWlssqpgVl6LwTBD0GpEomXzNYHs6bWiq53IzdF3ex4d0H693iNoo7kns9UAw==\";\n            string decryptedRes = DecryptWithNet(encryptedReq, key_bytes, ivKeyBytes);\n        }\n        private static string EncryptWithNet(byte[] plaintext, byte[] key, byte[] iv_bytes)\n        {\n            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine());\n            AeadParameters parameters = new AeadParameters(new KeyParameter(key), 128, iv_bytes, null);\n            cipher.Init(true, parameters);\n            byte[] encryptedBytes = new byte[cipher.GetOutputSize(plaintext.Length)];\n            Int32 retLen = cipher.ProcessBytes\n                           (plaintext, 0, plaintext.Length, encryptedBytes, 0);\n            cipher.DoFinal(encryptedBytes, retLen);\n            string encryptedReq = Convert.ToBase64String(encryptedBytes, Base64FormattingOptions.None);\n            Console.WriteLine(\"encryptedReq: \" + encryptedReq);\n            return encryptedReq;\n        }\n        private static string DecryptWithNet(string EncryptedText, byte[] key, byte[] iv_bytes)\n        {\n            byte[] encryptedBytes = Convert.FromBase64String(EncryptedText);\n            GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine());\n            AeadParameters parameters = new AeadParameters(new KeyParameter(key), 128, iv_bytes, null);\n            cipher.Init(false, parameters);\n            byte[] plainBytes = new byte[cipher.GetOutputSize(encryptedBytes.Length)];\n            Int32 retLen = cipher.ProcessBytes(encryptedBytes, 0, encryptedBytes.Length, plainBytes, 0);\n            cipher.DoFinal(plainBytes, retLen);\n            string decryptedReq = Encoding.UTF8.GetString(plainBytes).TrimEnd(\"\\r\\n\\0\".ToCharArray());\n            Console.WriteLine(\"decryptedReq: \" + decryptedReq);\n            return decryptedReq;\n        }\n    }\n}\n\n ```\n\n## Error Handling\n\nIf “**x-api-key**” is passed with incorrect value or without the value, it would fail with response message “**Invalid API Key**“\n\n###### Error Response:\n\n```\nGateway response type: INVALID_API_KEY with status code: 403\nGateway response body: {\"message\": \"Invalid API Key\"}\n\n ```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10154325"
+	},
+	"item": [
+		{
+			"name": "UAT - Create Payment Link",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic Ogg",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "dummy",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"encryptedRequest\": \"yCfmEtcAt3OzsInHPpdj/BzNktzgrewxHQR3iHDdyyG9U/V2TnYY7S3Ap9V7CG7X0TPA/bgZBcDN+MhP6VZ1CwEggGxA6Unazv3G8J91P39yzSpsP1dEa295+31U0Z5Pkw89y/eW8C+1TQKpBQbQ9+1ooLAIpV1CF42U5kaFT6hUiNnMKCgE1NMxjvF74aHYO5FpOjBv4xI=\",\r\n    \"secretKeyType\": \"\"\r\n}"
+				},
+				"url": {
+					"raw": "https://api-out.shop-se.in/merchant/secure/api/v2/paymentLinks",
+					"protocol": "https",
+					"host": [
+						"api-out",
+						"shop-se",
+						"in"
+					],
+					"path": [
+						"merchant",
+						"secure",
+						"api",
+						"v2",
+						"paymentLinks"
+					]
+				},
+				"description": "- Description: Payment Link API is used for creating the payment links which we would be SMS triggered would be triggered on to the Customer moble number for transacting further.\n- URL: `/merchant/secure/api/v2/paymentLinks`\n- Method: POST\n- Authentication: Yes\n- Parameters:\n    - `encryptedRequest`: \\[Mandatory\\] - After the encrypting function is done at your end for the plain text payload.\n    - `secretKeyType`: \\[Non-Mandatory\\] - Only if share with you, needs to be sent.\n- Status Codes:\n    - `200 OK`: The request was successful.\n    - `400 Bad Request`: Invalid request or missing required parameters.\n    - `401 Unauthorized`: Authentication failed or missing credentials.\n    - `404 Not Found`: The requested resource was not found.\n\n#### **Request and Response Parameter Detail**\n\n###### 1\\. Create Transaction API:\n\n<img src=\"https://content.pstmn.io/7aa8f8b5-6fad-43f7-bf26-2fa8933ef11b/aW1hZ2UucG5n\" width=\"1176\" height=\"2057\">\n\n###### **2\\. Create Transaction API Response**\n\n<img src=\"https://content.pstmn.io/e94592d7-ab21-4ed4-bba1-8b5803f8cd72/aW1hZ2UucG5n\" width=\"658\" height=\"467\">\n\n###### 3\\. Transaction Response (on return URL)\n\n<img src=\"https://content.pstmn.io/7c6cd63c-3cae-4f05-a2cf-2dc630058624/aW1hZ2UucG5n\" width=\"662\" height=\"714\">\n\n#### Error Code Details\n\n<img src=\"https://content.pstmn.io/850326a3-938a-4466-a63d-4f29cf3973e3/aW1hZ2UucG5n\" width=\"662\" height=\"1035\">\n\n#### **Sample request and response:**\n\n###### **Sample Plain Text (Payment Link API)**\n\n```\n{\n  \"amount\": 8000,\n  \"mobile\": \"9123123123\",\n  \"orderId\": \"PLAPI001\",\n  \"email\": \"getshopse@getshopse.com\",\n  \"consumerName\": \"My Consumer Name\",\n  \"returnUrl\": \"http://localhost/return\",\n  \"webhookUrl\": \"http://localhost/return/webhook\",\n  \"address\": {\n    \"line1\": \"address line 1\",\n    \"line2\": \"address line 2\",\n    \"city\": \"customer city\",\n    \"state\": \"customer state\",\n    \"country\": \"customer country\",\n    \"pincode\": \"400001\"\n  },\n  \"customParams\": {\n    \"salesPersonEmail\": \"sbi@sbi.com\",\n    \"salesPersonMobile\": \"9123123123\",\n    \"MyKey3\": \"MyValue3\",\n    \"MyKey4\": \"MyValue4\",\n    \"MyKey5\": \"MyValue5\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"P1\",\n      \"name\": \"Test one\",\n      \"invoiceNumber\": \"InV1\",\n      \"catalogProductId\": \"catalogProductId\",\n      \"code\": \"T1\",\n      \"amount\": \"4500\",\n      \"quantity\": \"1\",\n      \"skuCode\": \"SKUCode001\",\n      \"serialNo\": \"001\",\n      \"manufacturer\": \"manufacturer\",\n      \"category\": \"category\",\n      \"subCategory\": \"subCategory\",\n      \"model\": \"m1\",\n      \"imeiNo\": \"\",\n      \"additionalInfo\": {\n        \"MyKey1\": \"MyValue1\",\n        \"MyKey2\": \"MyValue2\",\n        \"MyKey3\": \"MyValue3\",\n        \"MyKey4\": \"MyValue4\",\n        \"MyKey5\": \"MyValue5\"\n      }\n    },\n    {\n      \"productId\": \"P1\",\n      \"name\": \"Test one\",\n      \"invoiceNumber\": \"InV1\",\n      \"catalogProductId\": \"catalogProductId\",\n      \"code\": \"T1\",\n      \"amount\": \"4500\",\n      \"quantity\": \"1\",\n      \"skuCode\": \"SKUCode001\",\n      \"serialNo\": \"001\",\n      \"manufacturer\": \"manufacturer\",\n      \"category\": \"category\",\n      \"subCategory\": \"subCategory\",\n      \"model\": \"m1\",\n      \"imeiNo\": \"\",\n      \"additionalInfo\": {\n        \"MyKey1\": \"MyValue1\",\n        \"MyKey2\": \"MyValue2\",\n        \"MyKey3\": \"MyValue3\",\n        \"MyKey4\": \"MyValue4\",\n        \"MyKey5\": \"MyValue5\"\n      }\n    }\n  ]\n}\n\n ```\n\n```\n{\n  \"amount\": 8000,\n  \"orderId\": \"PLAPI001\",\n  \"email\": \"getshopse@getshopse.com\",\n  \"mobile\": \"9123123123\",\n  \"expiryDate\": \"2020-09-14T16:22:28.441Z\",\n  \"status\": \"initiated\",\n  \"emailPaymentLink\": \"https://staging.getshopse.com/web/pl.html?14092020522123123123\"\n}\n\n ```\n\n###### Webhook Response:\n\n###### Encrypted:\n\n``` json\nSending webhook on url: https://staging.getshopse.com/web/webhook with object: SecureTransactionResponse(encryptedResponse=yCfvCcEWsXS2/9bHReVc2i/49aeDmNkHOh4m1SLd3SG+Sft1fHduuWHorpg0REnH3iDF/7sKGtOQpJMXsARhBAE1my8EuQSXiOfJ8MAiOXF21zVsKVdBdn1l+W9XzptD2Ft5gqeL5TqoVx+FDFvK+KghoOlFn1xWFJuHy1OBReRO2drOOSxV2gWs9JWsNaHJjn7GFEGJ+P7Gc0wrCk+9PcsTe3bqR+ltBk7dFvjeecQb/c1HB+pWoqFv4fkitygr7d3R1eYc/W4cZRClgivdo4LNAD9sqxvyK9mFXNFLnn2MPURxWkef4pqe0KesX5R7kDchdMvrjKoP3UUKyD40HVXbKH+fr5yRGEGS0rKmMrqRcPArmpxIiQiCJVHL+QSXFtd+6R6Tt7a7wMigCfRr/d68bGpwzXnRBsU7dTrAU9i8IBvZYYEnV645HNtioY0ZoWpxfw80kfDLL7lYKIAOFca8x/hzN11ls8fNkpuqT+CRzMMXsbRNkGtWSEMHxcQYcqaDJ/F1Atps690VQTdMnUdxQfhONEaZR3ujfvusL5RHP56pqTgN3GNDjkIRbpjzmPONoKK5PidSRAWNFNmpbgZgV2om+VpPVTFIk98UrMQiTWmPGu3QUHf8Fe4b4i+483Ioav90e68A+XYFNzdPlyLB/KKY8qfSLKeLULv+BWYycc3uhxRbzLGSqWHwq6MpZHwHCSJB27ZfBWvgvGdDdCkh6zwtvOt3JXSIMC8XQO/DsdGsBLW31Y3cW7kXlGhTGW3T28+PS+cR3sGHcjyQpSJzzZavopMp12mwDooXbpAKI+rmdjAjsCYyCLAGhjWleO++gocPSnzfJsy2mJ0/Grpvmg2eCwtzzTcR3dNf1EKXwHIv0OKfHaNTVfCti98vIS7iVW3DAGrdqv7PEGKGAlgE7Y6BufWg3QY6MjvUpilTlj24b2nmqYR8bVdHgZo5CdRX3FOUKHesjds1n4MgJ90elwBduroQ5zd/X0U+V89qC1ILGxLFcvNWcy9wo1Amqc3JhHDvMFJSziuoGu+CpkyzFuhPvtWcbsXqtMy0WqnzLrerLnWvZnomuEtEVaE160ogXrSDdYt+xLz/Xdm3OLXbhNrXg02wct0A8QB8EmJjketKC3wm14Fo0GzPaum+SPo4NlBDAqix6E9Zkny8klooGZNOmkK47HDrR3uIcFP/iYn3GnzcwHTrHXZHjcgRL5lShuN2WJXhl4Qi7dT0pPj/4igx9Sfb3nrBIXBYlfVCNA+21BCYBTEuDyAbkviyxAQepjh98y+SAeluUGwgNpcfQxlELDbsb2YzRH0ejXRAZWvQkbEHVflVJoK4B3gGpXpufTQiveDnry/4MJyFigWZqZxko9zrU7fwq4Uur8SqWLqB/rauU8riW77mlwswLI1MGP/wkQjBv+yFc/s2kQ/JzYMRjISaue2VM6Ryyk0nheQTz/14AAmDaLa0iQ4RijZq+lcGgVpwiOvcpH+RYZ4cSpJB3+wSPs+nP0Q5NtpqePADVKXto9kXLuC169JTMoF9PEy/7Pgm8sUz+0oT2/ptw/Vb4iIBad/1GKBw5IwOOBg8j59ocEW+mlK+7BaMVZsVW31b1CL9sOLWbZdWvNiB/Tmm1WZ8B/TMR1RFWbbc8zL5bpoz6u5G+EZaHO/aljTyX76AS6pQA/fYQcHgqfZJdmqLKhvaN4/i5g==)\n\n ```\n\n```\n{\n  \"orderId\": \"APIGATEWAYTEST007\",\n  \"shopSeTxnId\": \"S25102313103915765\",\n  \"status\": \"success\",\n  \"statusCode\": 0,\n  \"statusMessage\": \"Transaction successful\",\n  \"settlementStatus\": \"pending\",\n  \"consumer\": {\n    \"mobile\": \"9833672991\",\n    \"email\": \"rohan.deshmukh@getshopse.com\",\n    \"consumerName\": \"Rohan Deshmukh\",\n    \"address\": {\n      \"pincode\": \"400001\",\n      \"city\": \"customer city\",\n      \"line1\": \"address line 1\",\n      \"line2\": \"address line 2\",\n      \"state\": \"customer state\",\n      \"country\": \"customer country\",\n      \"coordinates\": null,\n      \"source\": null,\n      \"isGstAddress\": null,\n      \"googleInfo\": null,\n      \"reverseCoordinates\": null,\n      \"userCoordinates\": null,\n      \"reverseUserCoordinates\": null,\n      \"displayString\": \"address line 1, address line 2, customer city-400001\"\n    }\n  },\n  \"charge\": {\n    \"amount\": \"10000.0\",\n    \"discount\": \"260.86\",\n    \"settlement\": \"9050.0\",\n    \"gst\": \"171.0\",\n    \"netSettlement\": \"8879.0\",\n    \"invoice\": \"9739.14\",\n    \"mdrCharges\": \"950.0\"\n  },\n  \"product\": {\n    \"name\": \"Test one\"\n  },\n  \"payment\": {\n    \"bankName\": \"HDFC Bank\",\n    \"cardType\": \"CARDLESS\",\n    \"emi\": \"3333.33\",\n    \"tenure\": \"3\",\n    \"advanceEmiTenure\": null\n  },\n  \"timestamp\": \"2023-10-25T13:10:39.971Z\",\n  \"customParams\": {\n    \"salesPersonEmail\": \"sbi@sbi.com\",\n    \"salesPersonMobile\": \"9123123123\",\n    \"MyKey3\": \"MyValue3\",\n    \"MyKey4\": \"MyValue4\",\n    \"MyKey5\": \"MyValue5\"\n  },\n  \"currentTime\": \"1698239550438\",\n  \"signature\": \"mgLv55ze2RnxJAdhHYzAQ3xO7frvXX8lnQJrzhkA3NA=\",\n  \"providerInfo\": {\n    \"bankReferenceNo\": null\n  }\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "UAT - Enquiry/Verification",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic Ogg",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "dummy",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://api-out.shop-se.in/merchant/api/v2/transactions/S17072314143618032",
+					"protocol": "https",
+					"host": [
+						"api-out",
+						"shop-se",
+						"in"
+					],
+					"path": [
+						"merchant",
+						"api",
+						"v2",
+						"transactions",
+						"S17072314143618032"
+					]
+				},
+				"description": "- Description: Verification/ Enquiry API is used for enquiry the transaction status as we would send a response of the transaction state along with the related details. Using Transaction Enquiry API (Server to Server verification of transaction) you will not only be able to keep the updated status at your end but also will help you on reconciliation and success rate improvement with double transaction security.\n- URL: `/merchant/secure/api/v2/transactions/{id}`\n- Method: GET\n- Authentication: Yes\n- Parameters:\n    - `encryptedRequest`: \\[Mandatory\\] - After the encrypting function is done at your end for the plain text payload.\n    - `secretKeyType`: \\[Non-Mandatory\\] - Only if share with you, needs to be sent.\n- Status Codes:\n    - `200 OK`: The request was successful.\n    - `400 Bad Request`: Invalid request or missing required parameters.\n    - `401 Unauthorized`: Authentication failed or missing credentials.\n    - `404 Not Found`: The requested resource was not found.\n\n#### Request and Response Parameter Detail\n\n###### **Enquiry/Verification API Request Parameters**:\n\n<img src=\"https://content.pstmn.io/bfd4268b-90e4-4faa-9e89-71addebf53c7/aW1hZ2UucG5n\" width=\"1002\" height=\"179\">\n\n###### **Enquiry/Verification API** Response **Parameters**:\n\n<img src=\"https://content.pstmn.io/1b5df51b-4666-4bf4-aa2b-01ad0b818a17/aW1hZ2UucG5n\" width=\"662\" height=\"604\">\n\n#### **Sample Request and Response:**\n\n###### **Sample Plain Text (Enquiry/Verification API)**\n\n```\ncurl --location --request GET 'https://staging.getshopse.com/merchant/secure/api/v1/transactions/htKov441AAQSfnY' \\\n--header 'Authorization: Basic ODQ1NTA6NzViYmU0MKAtNWI1MCOOZjc4LWJiOGQtNjJlOTcxNjg4ZDgz'\n\n ```\n\n```\n{\n    \"orderId\": \"neworderformerchant\",\n    \"shopSeTxnId\": \"htKov441AAQSfnY\",\n    \"status\": \"success\",\n    \"settlementStatus\": \"pending\",\n    \"message\": \"success\",\n    \"consumer\": {\n        \"mobile\": \"9028055113\",\n        \"email\": \"9028055113@getshopse.com\"\n    },\n    \"charge\": {\n        \"amount\": \"4119.0\",\n        \"discount\": \"123.57\",\n        \"settlement\": \"3954.24\",\n        \"gst\": \"29.66\",\n        \"netSettlement\": \"4082.29\",\n        \"invoice\": \"3995.43\"\n    },\n    \"product\": {\n        \"name\": null\n    },\n    \"payment\": {\n        \"bankName\": \"HDFC Bank\",\n        \"cardType\": \"CREDIT\",\n        \"emi\": \"1360.76\",\n        \"tenure\": \"3\"\n    },\n    \"timestamp\": \"2020-04-23T11:35:44.422Z\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "UAT - Refund Request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic Ogg",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "dummy",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"encryptedRequest\": \"yAiKWdcWpUi8ubiXZdtm/A3Y2Z+siOlgU2o0pEW2tkKZZMNEdkB/hz+R+JgiaxDXinyauOZPC9iAr5oWtT5dTDZvpGsfQsSMRd1+b5vkYAk=\",\r\n    \"secretKeyType\": \"\"\r\n}"
+				},
+				"url": {
+					"raw": "https://api-out.shop-se.in/merchant/secure/api/v1/transactions/S17072314143618032/refunds",
+					"protocol": "https",
+					"host": [
+						"api-out",
+						"shop-se",
+						"in"
+					],
+					"path": [
+						"merchant",
+						"secure",
+						"api",
+						"v1",
+						"transactions",
+						"S17072314143618032",
+						"refunds"
+					]
+				},
+				"description": "- Description: Refund API is used for creating the refund against the transaction and response will be providing you the status of the transaction and the final status can fetched from the enquiry API.\n- URL: `/merchant/secure/api/v1/transactions/{id}/refunds`\n- Method: POST\n- Authentication: Yes\n- Parameters:\n    - `encryptedRequest`: \\[Mandatory\\] - After the encrypting function is done at your end for the plain text payload.\n    - `secretKeyType`: \\[Non-Mandatory\\] - Only if share with you, needs to be sent.\n- Status Codes:\n    - `200 OK`: The request was successful.\n    - `400 Bad Request`: Invalid request or missing required parameters.\n    - `401 Unauthorized`: Authentication failed or missing credentials.\n    - `404 Not Found`: The requested resource was not found.\n\n#### **Request Parameter Detail**\n\n###### **Refund API Request Parameters:**\n\n<img src=\"https://content.pstmn.io/ed364fe6-5ff2-4ceb-825e-0db4879774ce/aW1hZ2UucG5n\" width=\"1103\" height=\"376\">\n\n###### **Refund API Response Parameters:**\n\n<img src=\"https://content.pstmn.io/e0b8b7de-769a-4755-80d7-724d2d82c6a7/aW1hZ2UucG5n\" width=\"1038\" height=\"410\">\n\n#### **Sample Request and Response:**\n\n###### **Sample Plain Text (Refund API)**\n\n```\n{\n    \"refundTransactionId\": \"REFUND12345678\",\n    \"amount\": 5000.00\n}\n\n ```\n\n```\n{\n    \"orderId\": \"20200708_15\",\n    \"shopSeTxnId\": \"S0807201746412096759\",\n    \"refunds\": [\n        {\n            \"amount\": 5000.0,\n            \"status\": \"initiated\",\n            \"statusCode\": 70,\n            \"statusMessage\": \"Refund Initiated\",\n            \"refundTransactionId\": \"REFUND12345678\",\n            \"shopseRefundTransactionId\": \"S0807201111112096759\"\n            \"settlementStatus\": \"\"\n        }\n    ],\n    \"timestamp\": \"2020-07-08T12:16:42.025Z\",\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "https://api-out.shop-se.in/merchant/secure/api/v1/encryptAndDecrypt",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic MDE1NzI6ZTkxZWFmN2YtYTkwNC00NDlkLWEzMmItOTA4ZWYyMjJmYTgx",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "MY2uUdJrdyLLcpvKmdjaj0MYFFnRvhgMmYDAbFY6",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"secretKey\":\"h48Ivw+fmWyDU1qL299rXlRVb5XULVvdi35IUGgLGn8=\",\r\n    \"ivKey\":\"dOjsjPo+lGRQ7aUVcgYj1g==\",\r\n    \"payload\": \"{\\\"amount\\\": 1.00, \\\"mobile\\\": \\\"8861650714\\\", \\\"orderId\\\": \\\"SCULPORD-000024\\\", \\\"email\\\": \\\"rohan.deshmukh@getshopse.com\\\",\\\"consumerName\\\": \\\"Rohan Deshmukh\\\", \\\"returnUrl\\\": \\\"https://www.getshopse.com/\\\", \\\"webhookUrl\\\": \\\"https://staging.getshopse.com/web/webhook/\\\"}\",\r\n    \"type\":\"encrypt\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api-out.shop-se.in/merchant/secure/api/v1/encryptAndDecrypt",
+					"protocol": "https",
+					"host": [
+						"api-out",
+						"shop-se",
+						"in"
+					],
+					"path": [
+						"merchant",
+						"secure",
+						"api",
+						"v1",
+						"encryptAndDecrypt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://api-out.shop-se.in/merchant/secure/api/v1/encryptAndDecrypt",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic MDE1NzI6ZTkxZWFmN2YtYTkwNC00NDlkLWEzMmItOTA4ZWYyMjJmYTgx",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "MY2uUdJrdyLLcpvKmdjaj0MYFFnRvhgMmYDAbFY6",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"secretKey\":\"h48Ivw+fmWyDU1qL299rXlRVb5XULVvdi35IUGgLGn8=\",\r\n    \"ivKey\":\"dOjsjPo+lGRQ7aUVcgYj1g==\",\r\n    \"payload\": \"NoshpJYLmvVat19ZueGmIry4ituz5Kszg4iily4xXQQhkpTcVvhhylsTwApW9An1Gy4UsejaIIUyWDgjQb97zSCxVjBO9buhedUGvilDcZ0oK6Nu/UU3ml3hNubZY1W5EuKVJ6z6tvNZeiVHtFi2PMs82e86oA89JTlH1QflyL8KPIJtcMg1uXachi6+k5whSFDyyhk6M3iJyuxxc9jyRW/kWT5QcauWY+TzARDLtzl6tXOnz5FmS80CtoHMHVnvu0Z4kzuVPQt2WRn4iizdENVJVP+4N9k5pqzXzNSJmtH5+/1C+W0eepnOmxE3DIwaPCrNpg+Fw8k8epFEp580031SXpPtMThNZ2M5VJk6ItwAUSrFT5UXthQqggJdJDoWeTbtZB03uo7MVsSyCLLYoivrM9aJZP/L\",\r\n    \"type\":\"decrypt\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api-out.shop-se.in/merchant/secure/api/v1/encryptAndDecrypt",
+					"protocol": "https",
+					"host": [
+						"api-out",
+						"shop-se",
+						"in"
+					],
+					"path": [
+						"merchant",
+						"secure",
+						"api",
+						"v1",
+						"encryptAndDecrypt"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
